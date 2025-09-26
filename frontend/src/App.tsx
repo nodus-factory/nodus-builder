@@ -114,6 +114,28 @@ function App() {
     }
   }, [nodes, edges])
 
+  const handleToGraphSpec = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:8001/builder/to-graphspec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes, edges }),
+      })
+      const result = await response.json()
+      
+      if (result.status === 'converted') {
+        console.log('GraphSpec generated:', result.graphspec)
+        alert('✅ GraphSpec generated successfully! Check console for details.')
+        // You could also show this in a modal or side panel
+      } else {
+        alert(`❌ GraphSpec conversion failed: ${result.message}`)
+      }
+    } catch (error) {
+      console.error('GraphSpec conversion failed:', error)
+      alert('❌ GraphSpec conversion failed - check console for details')
+    }
+  }, [nodes, edges])
+
   return (
     <div className="h-screen bg-gray-50 flex">
       {/* Left Panel: Minigraf Hub */}
@@ -129,26 +151,32 @@ function App() {
       <div className="flex-1 flex flex-col">
         <div className="h-12 bg-white border-b border-gray-200 flex items-center px-4">
           <h1 className="text-lg font-semibold text-gray-900">🎨 NodusOS Builder</h1>
-          <div className="ml-auto flex space-x-2">
-            <button 
-              onClick={handleSave}
-              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
-            >
-              Save
-            </button>
-            <button 
-              onClick={handleValidate}
-              className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
-            >
-              Validate
-            </button>
-            <button 
-              onClick={handleDryRun}
-              className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
-            >
-              Dry Run
-            </button>
-          </div>
+              <div className="ml-auto flex space-x-2">
+                <button 
+                  onClick={handleSave}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+                >
+                  Save
+                </button>
+                <button 
+                  onClick={handleValidate}
+                  className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+                >
+                  Validate
+                </button>
+                <button 
+                  onClick={handleDryRun}
+                  className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+                >
+                  Dry Run
+                </button>
+                <button 
+                  onClick={handleToGraphSpec}
+                  className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200"
+                >
+                  To GraphSpec
+                </button>
+              </div>
         </div>
         
         <div className="flex-1">

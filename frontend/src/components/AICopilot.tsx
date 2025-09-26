@@ -115,6 +115,18 @@ export function LLMCompanion({ nodes, edges }: LLMCompanionProps) {
                 </ul>
               </div>
             )}
+            {suggestion.diagnostics && suggestion.diagnostics.length > 0 && (
+              <div className="mb-2">
+                <h5 className="text-xs font-medium text-red-600 mb-1">Diagnostics:</h5>
+                <ul className="text-xs text-red-600">
+                  {suggestion.diagnostics.map((diag: any, index: number) => (
+                    <li key={index} className={`${diag.severity === 'high' ? 'font-bold' : ''}`}>
+                      [{diag.severity?.toUpperCase()}] {diag.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 flex flex-col">
