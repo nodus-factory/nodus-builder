@@ -1,52 +1,135 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
+import ReactFlow, {
+  Node,
+  Edge,
+  addEdge,
+  Connection,
+  useNodesState,
+  useEdgesState,
+  Controls,
+  Background,
+  MiniMap,
+  NodeTypes,
+} from 'reactflow'
+import 'reactflow/dist/style.css'
+
+import { BuilderCanvas } from './components/BuilderCanvas'
+import { AICopilot } from './components/AICopilot'
+import { MinigrafHub } from './components/MinigrafHub'
+import { NodeInspector } from './components/NodeInspector'
+
+const initialNodes: Node[] = [
+  {
+    id: '1',
+    type: 'input',
+    position: { x: 250, y: 25 },
+    data: { label: 'Input Node' },
+  },
+  {
+    id: '2',
+    position: { x: 100, y: 125 },
+    data: { label: 'Default Node' },
+  },
+  {
+    id: '3',
+    type: 'output',
+    position: { x: 400, y: 125 },
+    data: { label: 'Output Node' },
+  },
+]
+
+const initialEdges: Edge[] = [
+  { id: 'e1-2', source: '1', target: '2' },
+  { id: 'e2-3', source: '2', target: '3' },
+]
 
 function App() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null)
+  const [activeTab, setActiveTab] = useState<'copilot' | 'inspector'>('copilot')
+
+  const onConnect = useCallback(
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    [setEdges]
+  )
+
+  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node)
+    setActiveTab('inspector')
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🎨 NodusOS Builder GUI
-          </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Visual graph editor with AI-assisted development
-          </p>
-          
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Canvas Area */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold text-gray-800">Graph Canvas</h2>
-                <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <div className="text-6xl mb-4">🎨</div>
-                  <p className="text-gray-600">
-                    Visual graph editor will be integrated here
-                  </p>
-                </div>
-              </div>
-              
-              {/* AI Copilot */}
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold text-gray-800">🤖 AI Copilot</h2>
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <textarea
-                    className="w-full p-3 border rounded-lg resize-none"
-                    placeholder="Describe the changes you want to make..."
-                    rows={3}
-                  />
-                  <button className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
-                    Generate Suggestion
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-8 text-center">
-              <p className="text-gray-500">
-                Builder GUI is ready for development! 🚀
-              </p>
-            </div>
+    <div className="h-screen bg-gray-50 flex">
+      {/* Left Panel: Minigraf Hub */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Minigraf Hub</h2>
+          <p className="text-sm text-gray-600">Drag & drop components</p>
+        </div>
+        <MinigrafHub />
+      </div>
+
+      {/* Center Panel: Builder Canvas */}
+      <div className="flex-1 flex flex-col">
+        <div className="h-12 bg-white border-b border-gray-200 flex items-center px-4">
+          <h1 className="text-lg font-semibold text-gray-900">🎨 NodusOS Builder</h1>
+          <div className="ml-auto flex space-x-2">
+            <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+              Save
+            </button>
+            <button className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200">
+              Validate
+            </button>
+            <button className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200">
+              Dry Run
+            </button>
           </div>
+        </div>
+        
+        <div className="flex-1">
+          <BuilderCanvas
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+          />
+        </div>
+      </div>
+
+      {/* Right Panel: AI Copilot & Inspector */}
+      <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+        <div className="h-12 border-b border-gray-200 flex">
+          <button
+            className={`flex-1 px-4 py-3 text-sm font-medium ${
+              activeTab === 'copilot'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+            onClick={() => setActiveTab('copilot')}
+          >
+            🤖 AI Copilot
+          </button>
+          <button
+            className={`flex-1 px-4 py-3 text-sm font-medium ${
+              activeTab === 'inspector'
+                ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+            onClick={() => setActiveTab('inspector')}
+          >
+            🔍 Inspector
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'copilot' ? (
+            <AICopilot nodes={nodes} edges={edges} />
+          ) : (
+            <NodeInspector node={selectedNode} />
+          )}
         </div>
       </div>
     </div>
