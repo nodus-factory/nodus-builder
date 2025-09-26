@@ -14,7 +14,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 
 import { BuilderCanvas } from './components/BuilderCanvas'
-import { AICopilot } from './components/AICopilot'
+import { LLMCompanion } from './components/AICopilot'
 import { MinigrafHub } from './components/MinigrafHub'
 import { NodeInspector } from './components/NodeInspector'
 
@@ -174,7 +174,7 @@ function App() {
             }`}
             onClick={() => setActiveTab('copilot')}
           >
-            🤖 AI Copilot
+                🤖 LLM Companion
           </button>
           <button
             className={`flex-1 px-4 py-3 text-sm font-medium ${
@@ -188,13 +188,13 @@ function App() {
           </button>
         </div>
         
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'copilot' ? (
-            <AICopilot nodes={nodes} edges={edges} />
-          ) : (
-            <NodeInspector node={selectedNode} />
-          )}
-        </div>
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'copilot' ? (
+                <LLMCompanion nodes={nodes} edges={edges} />
+              ) : (
+                <NodeInspector node={selectedNode} />
+              )}
+            </div>
       </div>
     </div>
   )
