@@ -48,6 +48,8 @@ function App() {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [activeTab, setActiveTab] = useState<'copilot' | 'inspector'>('copilot')
+  const [validationResult, setValidationResult] = useState<any>(null)
+  const [dryRunResult, setDryRunResult] = useState<any>(null)
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -58,6 +60,59 @@ function App() {
     setSelectedNode(node)
     setActiveTab('inspector')
   }, [])
+
+  const handleSave = useCallback(() => {
+    const graphData = { nodes, edges }
+    console.log('Saving graph:', graphData)
+    // TODO: Implement actual save functionality
+    alert('Graph saved! (This is a mock save)')
+  }, [nodes, edges])
+
+  const handleValidate = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:8001/builder/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nodes, edges }),
+      })
+      const result = await response.json()
+      setValidationResult(result)
+      
+      if (result.valid) {
+        alert('✅ Graph is valid!')
+      } else {
+        alert(`❌ Graph has errors: ${result.errors.map((e: any) => e.message).join(', ')}`)
+      }
+    } catch (error) {
+      console.error('Validation failed:', error)
+      alert('❌ Validation failed - check console for details')
+    }
+  }, [nodes, edges])
+
+  const handleDryRun = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:8001/builder/dry-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          graph: { nodes, edges },
+          fixtures: { mock: 'test data' }
+        }),
+      })
+      const result = await response.json()
+      setDryRunResult(result)
+      
+      if (result.success) {
+        alert('✅ Dry run completed successfully!')
+        console.log('Dry run timeline:', result.timeline)
+      } else {
+        alert(`❌ Dry run failed: ${result.result.message}`)
+      }
+    } catch (error) {
+      console.error('Dry run failed:', error)
+      alert('❌ Dry run failed - check console for details')
+    }
+  }, [nodes, edges])
 
   return (
     <div className="h-screen bg-gray-50 flex">
@@ -75,13 +130,22 @@ function App() {
         <div className="h-12 bg-white border-b border-gray-200 flex items-center px-4">
           <h1 className="text-lg font-semibold text-gray-900">🎨 NodusOS Builder</h1>
           <div className="ml-auto flex space-x-2">
-            <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200">
+            <button 
+              onClick={handleSave}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+            >
               Save
             </button>
-            <button className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200">
+            <button 
+              onClick={handleValidate}
+              className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+            >
               Validate
             </button>
-            <button className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200">
+            <button 
+              onClick={handleDryRun}
+              className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+            >
               Dry Run
             </button>
           </div>

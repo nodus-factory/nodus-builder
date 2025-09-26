@@ -23,12 +23,15 @@ export function MinigrafHub() {
   const fetchMinigrafs = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/builder/minigrafs')
+      const response = await fetch('http://localhost:8001/builder/minigrafs')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
       setMinigrafs(data)
     } catch (error) {
       console.error('Failed to fetch minigrafs:', error)
-      // Mock data for development
+      // Fallback mock data for development
       setMinigrafs([
         {
           id: 'finance.budget_builder',
@@ -59,6 +62,26 @@ export function MinigrafHub() {
           },
           tags: ['validation', 'schema', 'data'],
           description: 'Validate data against JSON schemas'
+        },
+        {
+          id: 'llm.structured_output',
+          version: '1.2.0',
+          io: {
+            input: { prompt: 'string', schema: 'object' },
+            output: { result: 'object' }
+          },
+          tags: ['llm', 'structured', 'output'],
+          description: 'Generate structured output using LLM with schema validation'
+        },
+        {
+          id: 'data.json_patch',
+          version: '1.0.0',
+          io: {
+            input: { document: 'object', patch: 'array' },
+            output: { result: 'object' }
+          },
+          tags: ['data', 'transform', 'patch'],
+          description: 'Apply JSON Patch operations to documents'
         }
       ])
     } finally {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useRef } from 'react'
 import ReactFlow, {
   Node,
   Edge,
@@ -8,6 +8,8 @@ import ReactFlow, {
   Controls,
   Background,
   MiniMap,
+  ReactFlowProvider,
+  useReactFlow,
 } from 'reactflow'
 
 interface BuilderCanvasProps {
@@ -19,7 +21,7 @@ interface BuilderCanvasProps {
   onNodeClick: (event: React.MouseEvent, node: Node) => void
 }
 
-export function BuilderCanvas({
+function BuilderCanvasInner({
   nodes,
   edges,
   onNodesChange,
@@ -27,8 +29,56 @@ export function BuilderCanvas({
   onConnect,
   onNodeClick,
 }: BuilderCanvasProps) {
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const { screenToFlowPosition } = useReactFlow()
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const onDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+
+    const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect()
+    if (!reactFlowBounds) return
+
+    const data = event.dataTransfer.getData('application/reactflow')
+    if (!data) return
+
+    try {
+      const { type, minigraf, position } = JSON.parse(data)
+      
+      if (type === 'minigraf') {
+        const position = screenToFlowPosition({
+          x: event.clientX - reactFlowBounds.left,
+          y: event.clientY - reactFlowBounds.top,
+        })
+
+        const newNode: Node = {
+          id: `${minigraf.id}_${Date.now()}`,
+          type: 'default',
+          position,
+          data: {
+            label: minigraf.id,
+            minigraf: minigraf,
+            description: minigraf.description,
+          },
+        }
+
+        // Add the new node
+        onNodesChange([{
+          type: 'add',
+          item: newNode,
+        }])
+      }
+    } catch (error) {
+      console.error('Failed to parse drop data:', error)
+    }
+  }, [screenToFlowPosition, onNodesChange])
+
   return (
-    <div className="h-full">
+    <div className="h-full" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -36,8 +86,24 @@ export function BuilderCanvas({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
         fitView
         attributionPosition="bottom-left"
+        nodeTypes={{
+          default: ({ data }) => (
+            <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400">
+              <div className="flex">
+                <div className="ml-2">
+                  <div className="text-lg font-bold">{data.label}</div>
+                  {data.description && (
+                    <div className="text-gray-500 text-xs">{data.description}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ),
+        }}
       >
         <Background />
         <Controls />
@@ -55,5 +121,13 @@ export function BuilderCanvas({
         />
       </ReactFlow>
     </div>
+  )
+}
+
+export function BuilderCanvas(props: BuilderCanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <BuilderCanvasInner {...props} />
+    </ReactFlowProvider>
   )
 }

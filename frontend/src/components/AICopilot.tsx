@@ -16,8 +16,8 @@ export function AICopilot({ nodes, edges }: AICopilotProps) {
 
     setLoading(true)
     try {
-      // Mock API call - replace with actual API
-      const response = await fetch('/api/builder/llm_suggest', {
+      // Connect to Builder backend API
+      const response = await fetch('http://localhost:8001/builder/llm_suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -26,11 +26,15 @@ export function AICopilot({ nodes, edges }: AICopilotProps) {
         }),
       })
       
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const data = await response.json()
       setSuggestion(data)
     } catch (error) {
       console.error('Failed to get suggestion:', error)
-      // Mock response for development
+      // Fallback mock response for development
       setSuggestion({
         rationale: "Added a new LLM node based on your request",
         patch: [
